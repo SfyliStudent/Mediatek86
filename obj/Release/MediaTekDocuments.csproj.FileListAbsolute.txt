@@ -1,0 +1,5 @@
+C:\wamp64\www\MediaTekDocuments-master\MediaTekDocuments\obj\Release\MediaTekDocuments.csproj.AssemblyReference.cache
+C:\wamp64\www\MediaTekDocuments-master\MediaTekDocuments\obj\Release\MediaTekDocuments.Properties.Resources.resources
+C:\wamp64\www\MediaTekDocuments-master\MediaTekDocuments\obj\Release\MediaTekDocuments.view.FrmMediatek.resources
+C:\wamp64\www\MediaTekDocuments-master\MediaTekDocuments\obj\Release\MediaTekDocuments.csproj.GenerateResource.cache
+C:\wamp64\www\MediaTekDocuments-master\MediaTekDocuments\obj\Release\MediaTekDocuments.csproj.CoreCompileInputs.cache

@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using MediaTekDocuments.model;
 using MediaTekDocuments.dal;
+using System;
+using Newtonsoft.Json;
+using System.Threading;
 
 namespace MediaTekDocuments.controller
 {
@@ -9,6 +12,13 @@ namespace MediaTekDocuments.controller
     /// </summary>
     class FrmMediatekController
     {
+        #region Commun
+        private readonly List<Livre> lesLivres;
+        private readonly List<Dvd> lesDvd;
+        private readonly List<Revue> lesRevues;
+        private readonly List<Categorie> lesRayons;
+        private readonly List<Categorie> lesPublics;
+        private readonly List<Categorie> lesGenres;
         /// <summary>
         /// Objet d'accès aux données
         /// </summary>
@@ -20,71 +30,123 @@ namespace MediaTekDocuments.controller
         public FrmMediatekController()
         {
             access = Access.GetInstance();
+            lesLivres = access.GetAllLivres();
+            lesDvd = access.GetAllDvd();
+            lesRevues = access.GetAllRevues();
+            lesGenres = access.GetAllGenres();
+            lesRayons = access.GetAllRayons();
+            lesPublics = access.GetAllPublics();
         }
 
         /// <summary>
         /// getter sur la liste des genres
         /// </summary>
-        /// <returns>Liste d'objets Genre</returns>
+        /// <returns>Collection d'objets Genre</returns>
         public List<Categorie> GetAllGenres()
         {
-            return access.GetAllGenres();
+            return lesGenres;
         }
 
         /// <summary>
         /// getter sur la liste des livres
         /// </summary>
-        /// <returns>Liste d'objets Livre</returns>
+        /// <returns>Collection d'objets Livre</returns>
         public List<Livre> GetAllLivres()
         {
-            return access.GetAllLivres();
+            return lesLivres;
         }
 
         /// <summary>
         /// getter sur la liste des Dvd
         /// </summary>
-        /// <returns>Liste d'objets dvd</returns>
+        /// <returns>Collection d'objets dvd</returns>
         public List<Dvd> GetAllDvd()
         {
-            return access.GetAllDvd();
+            return lesDvd;
         }
 
         /// <summary>
         /// getter sur la liste des revues
         /// </summary>
-        /// <returns>Liste d'objets Revue</returns>
+        /// <returns>Collection d'objets Revue</returns>
         public List<Revue> GetAllRevues()
         {
-            return access.GetAllRevues();
+            return lesRevues;
         }
 
         /// <summary>
         /// getter sur les rayons
         /// </summary>
-        /// <returns>Liste d'objets Rayon</returns>
+        /// <returns>Collection d'objets Rayon</returns>
         public List<Categorie> GetAllRayons()
         {
-            return access.GetAllRayons();
+            return lesRayons;
         }
 
         /// <summary>
         /// getter sur les publics
         /// </summary>
-        /// <returns>Liste d'objets Public</returns>
+        /// <returns>Collection d'objets Public</returns>
         public List<Categorie> GetAllPublics()
         {
-            return access.GetAllPublics();
+            return lesPublics;
         }
 
+        /// <summary>
+        /// getter sur les etats
+        /// </summary>
+        /// <returns></returns>
+        public List<Suivi> GetAllSuivis()
+        {
+            return access.GetAllSuivis();
+        }
+        #endregion
+        /// <summary>
+        /// getter sur les commandes de livre et de dvd
+        /// </summary>
+        /// <param name="idDocument"></param>
+        /// <returns>Collection d'objets CommandeDocument</returns>
+        public List<CommandeDocument> GetCommandesLivreDvd(string idDocument)
+        {
+            return access.GetCommandesLivreDvd(idDocument);
+        }
+        /// <summary>
+        /// Crée une commande de livre ou de DVD dans la bdd
+        /// </summary>
+        /// <param name="commande">L'objet CommandeDocument concerné</param>
+        /// <returns>True si la création a pu se faire</returns>
+        public bool CreerCommandeLivreDvd(CommandeDocument commande)
+        {
+            return access.CreerCommandeLivreDvd(commande);
+        }
+        /// <summary>
+        /// Met à jour le suivi d'une commande dans la bdd
+        /// </summary>
+        /// <param name="commande">L'objet CommandeDocument concerné</param>
+        /// <returns>True si la création a pu se faire</returns>
+        public bool UpdateCommande(CommandeDocument commande)
+        {
+            return access.UpdateCommande(commande);
+        }
+        /// <summary>
+        /// Supprime une commande de livre ou de DVD dans la bdd
+        /// </summary>
+        /// <param name="commande">L'objet CommandeDocument concerné</param>
+        /// <returns>True si la suppression a pu se faire</returns>
+        public bool DeleteCommandeLivreDvd(CommandeDocument commande)
+        {
+            return access.DeleteCommandeLivreDvd(commande);
+        }
 
+        #region Onglet Parutions
         /// <summary>
         /// récupère les exemplaires d'une revue
         /// </summary>
-        /// <param name="idDocuement">id de la revue concernée</param>
+        /// <param name="idDocument">id de la revue concernée</param>
         /// <returns>Liste d'objets Exemplaire</returns>
-        public List<Exemplaire> GetExemplairesRevue(string idDocuement)
+        public List<Exemplaire> GetExemplairesRevue(string idDocument)
         {
-            return access.GetExemplairesRevue(idDocuement);
+            return access.GetExemplairesRevue(idDocument);
         }
 
         /// <summary>
@@ -96,5 +158,17 @@ namespace MediaTekDocuments.controller
         {
             return access.CreerExemplaire(exemplaire);
         }
+        #endregion
+
+        /// <summary>
+        /// récupère les commandes d'une livre
+        /// </summary>
+        /// <param name="idLivre">id du livre concernée</param>
+        /// <returns></returns>
+        public List<CommandeDocument> GetCommandesLivres(string idLivre)
+        {
+            return access.GetCommandesLivres(idLivre);
+        }
     }
+
 }

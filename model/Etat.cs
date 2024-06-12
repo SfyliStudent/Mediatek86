@@ -6,14 +6,21 @@ namespace MediaTekDocuments.model
     /// </summary>
     public class Etat
     {
-        public string Id { get; set; }
-        public string Libelle { get; set; }
+        public string Id { get; }
+        public string Libelle { get; }
 
         public Etat(string id, string libelle)
         {
-            this.Id = id;
-            this.Libelle = libelle;
+            Id = id;
+            Libelle = libelle;
         }
-
+        /// <summary
+        /// Récupération du libellé pour l'affichage dans les combos
+        /// </summary>
+        /// <returns>Libelle</returns>
+        public override string ToString()
+        {
+            return Libelle;
+        }
     }
 }

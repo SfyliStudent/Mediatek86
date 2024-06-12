@@ -15,20 +15,43 @@ namespace MediaTekDocuments.view
     /// </summary>
     public partial class FrmMediatek : Form
     {
-        #region Commun
+        #region Variables globales
+
         private readonly FrmMediatekController controller;
+        const string ETATNEUF = "00001";
+
+        private readonly BindingSource bdgLivresListe = new BindingSource();
+        private readonly BindingSource bdgDvdListe = new BindingSource();
         private readonly BindingSource bdgGenres = new BindingSource();
         private readonly BindingSource bdgPublics = new BindingSource();
         private readonly BindingSource bdgRayons = new BindingSource();
+        private readonly BindingSource bdgRevuesListe = new BindingSource();
+        private readonly BindingSource bdgExemplairesListe = new BindingSource();
+        private readonly BindingSource bdgCLListe = new BindingSource();
+        private readonly BindingSource bdgSuivi = new BindingSource();
+        private readonly BindingSource bdgCDListe = new BindingSource();
+        private readonly BindingSource bdgCRListe = new BindingSource();
+        private List<Livre> lesLivres = new List<Livre>();
+        private List<Dvd> lesDvd = new List<Dvd>();
+        private List<Revue> lesRevues = new List<Revue>();
+        private List<Exemplaire> lesExemplaires = new List<Exemplaire>();
+        private List<CommandeDocument> lesCommandesLivresDvd = new List<CommandeDocument>();
+
+
+        #endregion
 
         /// <summary>
         /// Constructeur : création du contrôleur lié à ce formulaire
         /// </summary>
+
         internal FrmMediatek()
         {
             InitializeComponent();
             this.controller = new FrmMediatekController();
+           
         }
+
+        #region Commun
 
         /// <summary>
         /// Rempli un des 3 combo (genre, public, rayon)
@@ -36,6 +59,7 @@ namespace MediaTekDocuments.view
         /// <param name="lesCategories">liste des objets de type Genre ou Public ou Rayon</param>
         /// <param name="bdg">bindingsource contenant les informations</param>
         /// <param name="cbx">combobox à remplir</param>
+
         public void RemplirComboCategorie(List<Categorie> lesCategories, BindingSource bdg, ComboBox cbx)
         {
             bdg.DataSource = lesCategories;
@@ -45,11 +69,61 @@ namespace MediaTekDocuments.view
                 cbx.SelectedIndex = -1;
             }
         }
+
+        /// <summary>
+        /// Retourne l'id du suivi passé en paramètre
+        /// </summary>
+        /// <param name="suivi">Libellé du suivi</param>
+        /// <returns>String contenant l'id du suivi</returns>
+        private string getIdSuivi(string suivi)
+        {
+            List<Suivi> lesSuivis = controller.GetAllSuivis();
+            foreach (Suivi unSuivi in lesSuivis)
+            {
+                if (unSuivi.Libelle == suivi)
+                {
+                    return unSuivi.Id;
+                }
+            }
+            return null;
+        }
+        /// <summary>
+        /// Rempli un des 3 combo (genre, public, rayon)
+        /// </summary>
+        /// <param name="lesSuivis"></param>
+        /// <param name="bdg"></param>
+        /// <param name="cbx"></param>
+        public void RemplirComboSuivi(List<Suivi> lesSuivis, BindingSource bdg, ComboBox cbx, string suivi)
+        {
+            switch (suivi)
+            {
+                case "en cours":
+                    lesSuivis.RemoveAt(2);
+                    break;
+                case "livrée":
+                    lesSuivis.RemoveAt(3);
+                    lesSuivis.RemoveAt(0);
+                    break;
+                case "réglée":
+                    lesSuivis.Clear();
+                    break;
+                case "relancée":
+                    lesSuivis.RemoveAt(3);
+                    lesSuivis.RemoveAt(2);
+                    lesSuivis.RemoveAt(0);
+                    break;
+            }
+            bdg.DataSource = lesSuivis;
+            cbx.DataSource = bdg;
+            if (cbx.Items.Count > 0)
+            {
+                cbx.SelectedIndex = 0;
+            }
+        }
+
         #endregion
 
         #region Onglet Livres
-        private readonly BindingSource bdgLivresListe = new BindingSource();
-        private List<Livre> lesLivres = new List<Livre>();
 
         /// <summary>
         /// Ouverture de l'onglet Livres : 
@@ -363,8 +437,6 @@ namespace MediaTekDocuments.view
         #endregion
 
         #region Onglet Dvd
-        private readonly BindingSource bdgDvdListe = new BindingSource();
-        private List<Dvd> lesDvd = new List<Dvd>();
 
         /// <summary>
         /// Ouverture de l'onglet Dvds : 
@@ -678,8 +750,6 @@ namespace MediaTekDocuments.view
         #endregion
 
         #region Onglet Revues
-        private readonly BindingSource bdgRevuesListe = new BindingSource();
-        private List<Revue> lesRevues = new List<Revue>();
 
         /// <summary>
         /// Ouverture de l'onglet Revues : 
@@ -990,9 +1060,6 @@ namespace MediaTekDocuments.view
         #endregion
 
         #region Onglet Paarutions
-        private readonly BindingSource bdgExemplairesListe = new BindingSource();
-        private List<Exemplaire> lesExemplaires = new List<Exemplaire>();
-        const string ETATNEUF = "00001";
 
         /// <summary>
         /// Ouverture de l'onglet : récupère le revues et vide tous les champs.
@@ -1239,5 +1306,577 @@ namespace MediaTekDocuments.view
             }
         }
         #endregion
+
+        #region Onglet Commandes Livre
+
+        /// <summary>
+        /// Recherche et affichage du livre dont on a saisi le numéro.
+        /// Si non trouvé, affichage d'un MessageBox.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnCLNumRecherche_Click(object sender, EventArgs e)
+        {
+            if (!txbCLNumRecherche.Text.Equals(""))
+            {
+                Livre livre = lesLivres.Find(x => x.Id.Equals(txbCLNumRecherche.Text));
+                if (livre != null)
+                {
+                    AfficheCLInfos(livre);
+                }
+                else
+                {
+                    VideCLLivreInfos();
+                    MessageBox.Show("numéro introuvable");
+                }
+            }
+            else
+            {
+                VideCLLivreInfos();
+            }
+        }
+
+        /// <summary>
+        /// Affichage des informations du livre sélectionné
+        /// </summary>
+        /// <param name="livre"></param>
+        private void AfficheCLInfos(Livre livre)
+        {
+            txbCLAuteur.Text = livre.Auteur;
+            txbCLCollection.Text = livre.Collection;
+            txbCLImage.Text = livre.Image;
+            txbCLIsbn.Text = livre.Isbn;
+            txbCLGenre.Text = livre.Genre;
+            txbCLPublic.Text = livre.Public;
+            txbCLRayon.Text = livre.Rayon;
+            txbCLTitre.Text = livre.Titre;
+            string image = livre.Image;
+            try
+            {
+                pcbCLImage.Image = Image.FromFile(image);
+            }
+            catch
+            {
+                pcbCLImage.Image = null;
+            }
+            accesCommandeLivreGroupBox(true);
+            afficheCommandesLivres();
+        }
+
+        /// <summary>
+        /// Permet d'afficher la liste des commandes de livre
+        /// </summary>
+        private void afficheCommandesLivres()
+        {
+            string idDocument = txbCLNumRecherche.Text;
+            lesCommandesLivresDvd = controller.GetCommandesLivreDvd(idDocument);
+            RemplirCommandesLivresListe(lesCommandesLivresDvd);
+        }
+
+        /// <summary>
+        /// Remplit le datagrid avec la liste reçue en paramètre
+        /// </summary>
+        private void RemplirCommandesLivresListe(List<CommandeDocument> lesCommandes)
+        {
+            bdgCLListe.DataSource = lesCommandes;
+            dgvCLListe.DataSource = bdgCLListe;
+            dgvCLListe.Columns["id"].Visible = false;
+            dgvCLListe.Columns["idSuivi"].Visible = false;
+            dgvCLListe.Columns["idLivreDvd"].Visible = false;
+            dgvCLListe.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            dgvCLListe.Columns["dateCommande"].DisplayIndex = 0;
+            dgvCLListe.Columns["montant"].DisplayIndex = 1;
+            dgvCLListe.Columns["suivi"].DisplayIndex = 2;
+            dgvCLListe.Columns["nbExemplaire"].DisplayIndex = 3;
+        }
+
+        /// <summary>
+        /// Ouverture de l'onglet : blocage en saisie des champs de saisie des infos de
+        /// la commande d'un livre
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void tabOngletsApplication_Enter(object sender, EventArgs e)
+        {
+            lesLivres = controller.GetAllLivres();
+            accesCommandeLivreGroupBox(false);
+            RemplirComboSuivi(controller.GetAllSuivis(), bdgSuivi, cbxEtapeSuiviCL, null);
+        }
+
+        /// <summary>
+        /// Permet ou interdit l'accès à la gestion de la commande d'un livre
+        /// et vide les objets graphiques
+        /// </summary>
+        /// <param name="acces"></param>
+        private void accesCommandeLivreGroupBox(bool acces)
+        {
+            VideCommandesLivreInfos();
+            grpCommandeLivre.Enabled = acces;
+        }
+
+        /// <summary>
+        /// Vide les zones d'affchage des informations du livre
+        /// </summary>
+        private void VideCLLivreInfos()
+        {
+            txbCLTitre.Text = "";
+            txbCLAuteur.Text = "";
+            txbCLCollection.Text = "";
+            txbCLGenre.Text = "";
+            txbCLPublic.Text = "";
+            txbCLRayon.Text = "";
+            txbCLIsbn.Text = "";
+            txbCLImage.Text = "";
+            pcbCLImage.Image = null;
+            lesCommandesLivresDvd = new List<CommandeDocument>();
+            RemplirCommandesLivresListe(lesCommandesLivresDvd);
+            accesCommandeLivreGroupBox(false);
+        }
+
+        /// <summary>
+        /// Vide les zones d'affchage des informations de la commande du livre
+        /// </summary>
+        private void VideCommandesLivreInfos()
+        {
+            txbMontantCL.Text = "";
+            txbNbExemplaireCL.Text = "";
+            dtpDateCL.Value = DateTime.Now;
+            txbNumCL.Text = "";
+            cbxEtapeSuiviCL.Enabled = false;
+        }
+
+        /// <summary>
+        /// Si le numéro de livre est modifié, la zone de la commande est vidée et inactive
+        /// les informations du livre son aussi effacées
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void txbCLNumRecherche_TextChanged(object sender, EventArgs e)
+        {
+            accesCommandeLivreGroupBox(false);
+            VideCLLivreInfos();
+        }
+
+        /// <summary>
+        /// Enregistrement d'une commande de livre
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnValiderCL_Click(object sender, EventArgs e)
+        {
+            if (!txbNumCL.Text.Equals(""))
+            {
+                try
+                {
+                    string id = txbNumCL.Text;
+                    DateTime dateCommande = dtpDateCL.Value;
+                    string montantStr = txbMontantCL.Text;
+                    double montant = double.Parse(montantStr);
+                    string suivi = "en cours";
+                    string idSuivi = "1";
+                    string nbExemplaireStr = txbNbExemplaireCL.Text;
+                    int nbExemplaire = int.Parse(nbExemplaireStr);
+                    string idLivreDvd = txbCLNumRecherche.Text;
+                    CommandeDocument commande = new CommandeDocument(id, dateCommande, montant, idSuivi, suivi, nbExemplaire, idLivreDvd);
+                    if (controller.CreerCommandeLivreDvd(commande))
+                    {
+                        VideCommandesLivreInfos();
+                        afficheCommandesLivres();
+                    }
+                    else
+                    {
+                        MessageBox.Show("numéro de commande déjà existant", "Erreur");
+                    }
+                }
+                catch
+                {
+                    MessageBox.Show("le montant et le nombre d'exemplaire doivent être numériques", "Information");
+                    txbMontantCL.Text = "";
+                    txbNbExemplaireCL.Text = "";
+                    txbMontantCL.Focus();
+                }
+            }
+            else
+            {
+                MessageBox.Show("numéro de livre obligatoire", "Information");
+            }
+        }
+
+        /// <summary>
+        /// Sélection d'une ligne complète d'une commande de livre
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void dgvCLListe_SelectionChanged(object sender, EventArgs e)
+        {
+            if (dgvCLListe.CurrentCell != null)
+            {
+                CommandeDocument commande = (CommandeDocument)bdgCLListe.List[bdgCLListe.Position];
+                afficheCommandesLivresInfos(commande);
+            }
+        }
+
+        /// <summary>
+        /// Affiche les informations de la commande passée en paramètre
+        /// </summary>
+        /// <param name="commande">Objet de type CommandeDocument</param>
+        private void afficheCommandesLivresInfos(CommandeDocument commande)
+        {
+            dtpDateCL.Value = commande.DateCommande;
+            txbMontantCL.Text = (commande.Montant).ToString();
+            txbNbExemplaireCL.Text = (commande.NbExemplaire).ToString();
+            cbxEtapeSuiviCL.Text = commande.Suivi;
+            cbxEtapeSuiviCL.Enabled = true;
+            txbNumCL.Text = commande.Id;
+            RemplirComboSuivi(controller.GetAllSuivis(), bdgSuivi, cbxEtapeSuiviCL, commande.Suivi);
+        }
+
+        /// <summary>
+        /// Mise à jour du suivi d'une commande de livre
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnUpdateCL_Click(object sender, EventArgs e)
+        {
+            if (bdgCLListe.Count != 0)
+            {
+                string id = txbNumCL.Text;
+                DateTime dateCommande = dtpDateCL.Value;
+                string montantStr = txbMontantCL.Text;
+                double montant = double.Parse(montantStr);
+                string suivi = cbxEtapeSuiviCL.Text;
+                string idSuivi = getIdSuivi(cbxEtapeSuiviCL.Text);
+                string nbExemplaireStr = txbNbExemplaireCL.Text;
+                int nbExemplaire = int.Parse(nbExemplaireStr);
+                string idLivreDvd = txbCLNumRecherche.Text;
+                CommandeDocument commande = new CommandeDocument(id, dateCommande, montant, idSuivi, suivi, nbExemplaire, idLivreDvd);
+                if (controller.UpdateCommande(commande))
+                {
+                    VideCommandesLivreInfos();
+                    afficheCommandesLivres();
+                }
+                else
+                {
+                    MessageBox.Show("commande invalide", "Erreur");
+                }
+            }
+            else
+            {
+                MessageBox.Show("liste vide", "Information");
+            }
+        }
+
+        /// <summary>
+        /// Supprime une commande de livre si elle n'est pas livrée ou réglée
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnDelCL_Click(object sender, EventArgs e)
+        {
+            if (bdgCLListe.Count != 0)
+            {
+                CommandeDocument commande = (CommandeDocument)bdgCLListe.List[bdgCLListe.Position];
+                if (commande.IdSuivi.Equals("1") || commande.IdSuivi.Equals("4"))
+                {
+                    controller.DeleteCommandeLivreDvd(commande);
+                }
+                VideCommandesLivreInfos();
+                afficheCommandesLivres();
+            }
+            else
+            {
+                MessageBox.Show("liste vide", "Information");
+            }
+        }
+
+        #endregion
+
+        #region Commandes DVD
+
+        /// <summary>
+        /// Recherche et affichage du DVD dont on a saisi le numéro.
+        /// Si non trouvé, affichage d'un MessageBox.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnCDNumRecherche_Click(object sender, EventArgs e)
+        {
+            if (!txbCDNumRecherche.Text.Equals(""))
+            {
+                Dvd dvd = lesDvd.Find(x => x.Id.Equals(txbCDNumRecherche.Text));
+                if (dvd != null)
+                {
+                    AfficheCDInfos(dvd);
+                }
+                else
+                {
+                    VideCDDvdInfos();
+                    MessageBox.Show("numéro introuvable");
+                }
+            }
+            else
+            {
+                VideCDDvdInfos();
+            }
+        }
+
+        /// <summary>
+        /// Affichage des informations du DVD sélectionné
+        /// </summary>
+        /// <param name="dvd"></param>
+        private void AfficheCDInfos(Dvd dvd)
+        {
+            txbCDRealisateur.Text = dvd.Realisateur;
+            txbCDSynopsis.Text = dvd.Synopsis;
+            txbCDImage.Text = dvd.Image;
+            txbCDDuree.Text = (dvd.Duree).ToString();
+            txbCDGenre.Text = dvd.Genre;
+            txbCDPublic.Text = dvd.Public;
+            txbCDRayon.Text = dvd.Rayon;
+            txbCDTitre.Text = dvd.Titre;
+            string image = dvd.Image;
+            try
+            {
+                pcbCDImage.Image = Image.FromFile(image);
+            }
+            catch
+            {
+                pcbCDImage.Image = null;
+            }
+            accesCommandeDvdGroupBox(true);
+            afficheCommandesDvd();
+        }
+
+        /// <summary>
+        /// Permet d'afficher la liste des commandes de DVD
+        /// </summary>
+        private void afficheCommandesDvd()
+        {
+            string idDocument = txbCDNumRecherche.Text;
+            lesCommandesLivresDvd = controller.GetCommandesLivreDvd(idDocument);
+            RemplirCommandesDvdListe(lesCommandesLivresDvd);
+        }
+
+        /// <summary>
+        /// Remplit le datagrid avec la liste reçue en paramètre
+        /// </summary>
+        private void RemplirCommandesDvdListe(List<CommandeDocument> lesCommandes)
+        {
+            bdgCDListe.DataSource = lesCommandes;
+            dgvCDListe.DataSource = bdgCDListe;
+            dgvCDListe.Columns["id"].Visible = false;
+            dgvCDListe.Columns["idSuivi"].Visible = false;
+            dgvCDListe.Columns["idLivreDvd"].Visible = false;
+            dgvCDListe.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            dgvCDListe.Columns["dateCommande"].DisplayIndex = 0;
+            dgvCDListe.Columns["montant"].DisplayIndex = 1;
+            dgvCDListe.Columns["suivi"].DisplayIndex = 2;
+            dgvCDListe.Columns["nbExemplaire"].DisplayIndex = 3;
+        }
+
+        /// <summary>
+        /// Ouverture de l'onglet : blocage en saisie des champs de saisie des infos de
+        /// la commande d'un DVD
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void tabCommandesDvd_Enter(object sender, EventArgs e)
+        {
+            lesDvd = controller.GetAllDvd();
+            accesCommandeDvdGroupBox(false);
+            RemplirComboSuivi(controller.GetAllSuivis(), bdgSuivi, cbxEtapeSuiviCD, null);
+        }
+
+        /// <summary>
+        /// Permet ou interdit l'accès à la gestion de la commande d'un DVD
+        /// et vide les objets graphiques
+        /// </summary>
+        /// <param name="acces"></param>
+        private void accesCommandeDvdGroupBox(bool acces)
+        {
+            VideCommandesDvdInfos();
+            grpCommandeDvd.Enabled = acces;
+        }
+
+        /// <summary>
+        /// Vide les zones d'affchage des informations du DVD
+        /// </summary>
+        private void VideCDDvdInfos()
+        {
+            txbCDTitre.Text = "";
+            txbCDRealisateur.Text = "";
+            txbCDSynopsis.Text = "";
+            txbCDGenre.Text = "";
+            txbCDPublic.Text = "";
+            txbCDRayon.Text = "";
+            txbCDDuree.Text = "";
+            txbCDImage.Text = "";
+            pcbCDImage.Image = null;
+            lesCommandesLivresDvd = new List<CommandeDocument>();
+            RemplirCommandesDvdListe(lesCommandesLivresDvd);
+            accesCommandeDvdGroupBox(false);
+        }
+
+        /// <summary>
+        /// Vide les zones d'affchage des informations de la commande du DVD
+        /// </summary>
+        private void VideCommandesDvdInfos()
+        {
+            txbMontantCD.Text = "";
+            txbNbExemplaireCD.Text = "";
+            dtpDateCD.Value = DateTime.Now;
+            txbNumCD.Text = "";
+            cbxEtapeSuiviCD.Enabled = false;
+        }
+
+        /// <summary>
+        /// Si le numéro de DVD est modifié, la zone de la commande est vidée et inactive
+        /// les informations du DVD son aussi effacées
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void txbCDNumRecherche_TextChanged(object sender, EventArgs e)
+        {
+            accesCommandeDvdGroupBox(false);
+            VideCDDvdInfos();
+        }
+
+        /// <summary>
+        /// Enregistrement d'une commande de DVD
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnValiderCD_Click(object sender, EventArgs e)
+        {
+            if (!txbNumCD.Text.Equals(""))
+            {
+                try
+                {
+                    string id = txbNumCD.Text;
+                    DateTime dateCommande = dtpDateCD.Value;
+                    string montantStr = txbMontantCD.Text;
+                    double montant = double.Parse(montantStr);
+                    string suivi = "en cours";
+                    string idSuivi = "1";
+                    string nbExemplaireStr = txbNbExemplaireCD.Text;
+                    int nbExemplaire = int.Parse(nbExemplaireStr);
+                    string idLivreDvd = txbCDNumRecherche.Text;
+                    CommandeDocument commande = new CommandeDocument(id, dateCommande, montant, idSuivi, suivi, nbExemplaire, idLivreDvd);
+                    if (controller.CreerCommandeLivreDvd(commande))
+                    {
+                        VideCommandesDvdInfos();
+                        afficheCommandesDvd();
+                    }
+                    else
+                    {
+                        MessageBox.Show("numéro de commande déjà existant", "Erreur");
+                    }
+                }
+                catch
+                {
+                    MessageBox.Show("le montant et le nombre d'exemplaire doivent être numériques", "Information");
+                    txbMontantCD.Text = "";
+                    txbNbExemplaireCD.Text = "";
+                    txbMontantCD.Focus();
+                }
+            }
+            else
+            {
+                MessageBox.Show("numéro de DVD obligatoire", "Information");
+            }
+        }
+
+        /// <summary>
+        /// Sélection d'une ligne complète d'une commande de DVD
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void dgvCDListe_SelectionChanged(object sender, EventArgs e)
+        {
+            if (dgvCDListe.CurrentCell != null)
+            {
+                CommandeDocument commande = (CommandeDocument)bdgCDListe.List[bdgCDListe.Position];
+                afficheCommandesDvdInfos(commande);
+            }
+        }
+
+        /// <summary>
+        /// Affiche les informations de la commande passée en paramètre
+        /// </summary>
+        /// <param name="commande">Objet de type CommandeDocument</param>
+        private void afficheCommandesDvdInfos(CommandeDocument commande)
+        {
+            dtpDateCD.Value = commande.DateCommande;
+            txbMontantCD.Text = (commande.Montant).ToString();
+            txbNbExemplaireCD.Text = (commande.NbExemplaire).ToString();
+            cbxEtapeSuiviCD.Text = commande.Suivi;
+            cbxEtapeSuiviCD.Enabled = true;
+            txbNumCD.Text = commande.Id;
+            RemplirComboSuivi(controller.GetAllSuivis(), bdgSuivi, cbxEtapeSuiviCD, commande.Suivi);
+        }
+
+        /// <summary>
+        /// Mise à jour du suivi d'une commande de DVD
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnUpdateCD_Click(object sender, EventArgs e)
+        {
+            if (bdgCDListe.Count != 0)
+            {
+                string id = txbNumCD.Text;
+                DateTime dateCommande = dtpDateCD.Value;
+                string montantStr = txbMontantCD.Text;
+                double montant = double.Parse(montantStr);
+                string suivi = cbxEtapeSuiviCD.Text;
+                string idSuivi = getIdSuivi(cbxEtapeSuiviCD.Text);
+                string nbExemplaireStr = txbNbExemplaireCD.Text;
+                int nbExemplaire = int.Parse(nbExemplaireStr);
+                string idLivreDvd = txbCDNumRecherche.Text;
+                CommandeDocument commande = new CommandeDocument(id, dateCommande, montant, idSuivi, suivi, nbExemplaire, idLivreDvd);
+                if (controller.UpdateCommande(commande))
+                {
+                    VideCommandesDvdInfos();
+                    afficheCommandesDvd();
+                }
+                else
+                {
+                    MessageBox.Show("commande invalide", "Erreur");
+                }
+            }
+            else
+            {
+                MessageBox.Show("liste vide", "Information");
+            }
+        }
+
+        /// <summary>
+        /// Supprime une commande de DVD si elle n'est pas livrée ou réglée
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnDelCD_Click(object sender, EventArgs e)
+        {
+            if (bdgCDListe.Count != 0)
+            {
+                CommandeDocument commande = (CommandeDocument)bdgCDListe.List[bdgCDListe.Position];
+                if (commande.IdSuivi.Equals("1") || commande.IdSuivi.Equals("4"))
+                {
+                    controller.DeleteCommandeLivreDvd(commande);
+                }
+                VideCommandesDvdInfos();
+                afficheCommandesDvd();
+            }
+            else
+            {
+                MessageBox.Show("liste vide", "Information");
+            }
+        }
+
+        #endregion
+
+
+
+
     }
 }

@@ -5,6 +5,7 @@ using System;
 using Newtonsoft.Json;
 using System.Threading;
 
+
 namespace MediaTekDocuments.controller
 {
     /// <summary>
@@ -100,6 +101,7 @@ namespace MediaTekDocuments.controller
         {
             return access.GetAllSuivis();
         }
+
         #endregion
         /// <summary>
         /// getter sur les commandes de livre et de dvd
@@ -109,6 +111,24 @@ namespace MediaTekDocuments.controller
         public List<CommandeDocument> GetCommandesLivreDvd(string idDocument)
         {
             return access.GetCommandesLivreDvd(idDocument);
+        }
+        /// <summary>
+        /// getter sur les commandes de livre et de dvd
+        /// </summary>
+        /// <param name="idDocument"></param>
+        /// <returns>Collection d'objets CommandeDocument</returns>
+        public List<Abonnement> GetCommandesRevues(string idDocument)
+        {
+            return access.GetCommandesRevues(idDocument);
+        }
+        /// <summary>
+        /// Crée une commande de revue dans la bdd
+        /// </summary>
+        /// <param name="commande">L'objet Abonnement concerné</param>
+        /// <returns>True si la création a pu se faire</returns>
+        public bool CreerCommandeRevue(Abonnement commande)
+        {
+            return access.CreerCommandeRevue(commande);
         }
         /// <summary>
         /// Crée une commande de livre ou de DVD dans la bdd
@@ -127,6 +147,15 @@ namespace MediaTekDocuments.controller
         public bool UpdateCommande(CommandeDocument commande)
         {
             return access.UpdateCommande(commande);
+        }
+        /// <summary>
+        /// Supprime une commande de revue dans la bdd
+        /// </summary>
+        /// <param name="commande"></param>
+        /// <returns>True si la suppression a pu se faire</returns>
+        public bool DeleteCommandeRevue(Abonnement commande)
+        {
+            return access.DeleteCommandeRevue(commande);
         }
         /// <summary>
         /// Supprime une commande de livre ou de DVD dans la bdd
@@ -160,15 +189,7 @@ namespace MediaTekDocuments.controller
         }
         #endregion
 
-        /// <summary>
-        /// récupère les commandes d'une livre
-        /// </summary>
-        /// <param name="idLivre">id du livre concernée</param>
-        /// <returns></returns>
-        public List<CommandeDocument> GetCommandesLivres(string idLivre)
-        {
-            return access.GetCommandesLivres(idLivre);
-        }
-    }
 
+
+    }
 }

@@ -160,18 +160,6 @@ namespace MediaTekDocuments.dal
         /// <summary>
         /// Retourne les commandes d'un livre
         /// </summary>
-        /// <param name="idLivre"></param>
-        /// <returns></returns>
-        public List<CommandeDocument> GetCommandesLivres(string idLivre)
-        {
-            String jsonIdDocument = convertToJson("idLivreDvd", idLivre);
-            List<CommandeDocument> lesCommandesLivres = TraitementRecup<CommandeDocument>(GET, "commandedocument/" + jsonIdDocument);
-            return lesCommandesLivres;
-        }
-
-        /// <summary>
-        /// Retourne les commandes d'un livre
-        /// </summary>
         /// <param name="idDocument"></param>
         /// <returns></returns>
         public List<CommandeDocument> GetCommandesLivreDvd(string idDocument)
@@ -179,6 +167,18 @@ namespace MediaTekDocuments.dal
             List<CommandeDocument> lesCommandes = new List<CommandeDocument>();
             String jsonIdDocument = convertToJson("idLivreDvd", idDocument);
             lesCommandes = TraitementRecup<CommandeDocument>(GET, "commandedocument/" + jsonIdDocument);
+            return lesCommandes;
+        }
+        /// <summary>
+        /// Retourne les commandes d'une revue
+        /// </summary>
+        /// <param name="idDocument"></param>
+        /// <returns></returns>
+        public List<Abonnement> GetCommandesRevues(string idDocument)
+        {
+            List<Abonnement> lesCommandes = new List<Abonnement>();
+            String jsonIdDocument = convertToJson("id", idDocument);
+            lesCommandes = TraitementRecup<Abonnement>(GET, "revue/" + jsonIdDocument);
             return lesCommandes;
         }
 
@@ -224,7 +224,27 @@ namespace MediaTekDocuments.dal
                 return false;
             }
         }
-        public bool UpdateCommande(CommandeDocument commande)
+        /// <summary>
+        /// ecriture d'une commande de revue en base de données
+        /// </summary>
+        /// <param name="commande"></param>
+        /// <returns>true si l'insertion a pu se faire</returns>
+        public bool CreerCommandeRevue(Abonnement commande)
+        {
+            String jsonCommande = JsonConvert.SerializeObject(commande);
+            try
+            {
+                Access accessInstance = new Access();
+                List<Abonnement> liste = accessInstance.TraitementRecup<Abonnement>(POST, "revue/" + jsonCommande);
+                return (liste != null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
+            public bool UpdateCommande(CommandeDocument commande)
         {
             String jsonCommande = JsonConvert.SerializeObject(commande);
             try
@@ -258,7 +278,23 @@ namespace MediaTekDocuments.dal
                 return false;
             }
         }
-
+        public bool DeleteCommandeRevue(Abonnement commande)
+        {
+            String jsonCommande = JsonConvert.SerializeObject(commande);
+            try
+            {
+                // Créer une instance de la classe Access
+                Access accessInstance = new Access();
+                // Assurez-vous que TraitementRecup est une méthode statique ou appelée sur une instance correcte
+                List<Abonnement> liste = accessInstance.TraitementRecup<Abonnement>(DELETE, "revue/" + jsonCommande);
+                return (liste != null);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return false;
+            }
+        }
 
         /// <summary>
         /// Traitement de la récupération du retour de l'api, avec conversion du json en liste pour les select (GET)

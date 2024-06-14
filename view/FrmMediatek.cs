@@ -36,6 +36,7 @@ namespace MediaTekDocuments.view
         private List<Revue> lesRevues = new List<Revue>();
         private List<Exemplaire> lesExemplaires = new List<Exemplaire>();
         private List<CommandeDocument> lesCommandesLivresDvd = new List<CommandeDocument>();
+        private List<Abonnement> lesCommandesRevues = new List<Abonnement>();
 
 
         #endregion
@@ -48,7 +49,7 @@ namespace MediaTekDocuments.view
         {
             InitializeComponent();
             this.controller = new FrmMediatekController();
-           
+
         }
 
         #region Commun
@@ -1396,7 +1397,7 @@ namespace MediaTekDocuments.view
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tabOngletsApplication_Enter(object sender, EventArgs e)
+        private void TabCommandesLivres_Enter(object sender, EventArgs e)
         {
             lesLivres = controller.GetAllLivres();
             accesCommandeLivreGroupBox(false);
@@ -1874,9 +1875,180 @@ namespace MediaTekDocuments.view
         }
 
         #endregion
+        #region Commandes Revue
 
+        /// <summary>
+        /// Recherche et affichage de la revue dont on a saisi le numéro.
+        /// Si non trouvé, affichage d'un MessageBox.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnCRNumRecherche_Click(object sender, EventArgs e)
+        {
 
+        }
 
+        /// <summary>
+        /// Affichage des informations de la revue sélectionnée
+        /// </summary>
+        /// <param name="revue"></param>
+        private void AfficheCRInfos(Revue revue)
+        {
+            txbCRPeriodicite.Text = revue.Periodicite;
+            txbCRDispo.Text = (revue.DelaiMiseADispo).ToString();
+            txbCRImage.Text = revue.Image;
+            chkCREmpruntable.Checked = revue.Empruntable;
+            txbCRGenre.Text = revue.Genre;
+            txbCRPublic.Text = revue.Public;
+            txbCRRayon.Text = revue.Rayon;
+            txbCRTitre.Text = revue.Titre;
+            string image = revue.Image;
+            try
+            {
+                pcbCRImage.Image = Image.FromFile(image);
+            }
+            catch
+            {
+                pcbCRImage.Image = null;
+            }
+            accesCommandeRevueGroupBox(true);
+            afficheCommandesRevues();
+        }
+
+        /// <summary>
+        /// Permet d'afficher la liste des commandes de revues
+        /// </summary>
+        private void afficheCommandesRevues()
+        {
+            string idDocument = txbCRNumRecherche.Text;
+            lesCommandesRevues = controller.GetCommandesRevues(idDocument);
+            RemplirCommandesRevuesListe(lesCommandesRevues);
+        }
+
+        /// <summary>
+        /// Remplit le datagrid avec la liste reçue en paramètre
+        /// </summary>
+        private void RemplirCommandesRevuesListe(List<Abonnement> lesCommandes)
+        {
+            bdgCRListe.DataSource = lesCommandes;
+            dgvCRListe.DataSource = bdgCRListe;
+            dgvCRListe.Columns["id"].Visible = false;
+            dgvCRListe.Columns["idRevue"].Visible = false;
+            dgvCRListe.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            dgvCRListe.Columns["dateCommande"].DisplayIndex = 0;
+            dgvCRListe.Columns["montant"].DisplayIndex = 1;
+            dgvCRListe.Columns["dateFinAbonnement"].DisplayIndex = 2;
+        }
+
+        /// <summary>
+        /// Ouverture de l'onglet : blocage en saisie des champs de saisie des infos de
+        /// la commande d'une revue
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void tabCommandesRevues_Enter(object sender, EventArgs e)
+        {
+            lesRevues = controller.GetAllRevues();
+            accesCommandeRevueGroupBox(false);
+        }
+
+        /// <summary>
+        /// Permet ou interdit l'accès à la gestion de la commande d'une revue
+        /// et vide les objets graphiques
+        /// </summary>
+        /// <param name="acces"></param>
+        private void accesCommandeRevueGroupBox(bool acces)
+        {
+            VideCommandesRevuesInfos();
+            grpCommandeRevue.Enabled = acces;
+        }
+
+        /// <summary>
+        /// Vide les zones d'affchage des informations de la revue
+        /// </summary>
+        private void VideCRRevueInfos()
+        {
+            txbCRTitre.Text = "";
+            txbCRPeriodicite.Text = "";
+            txbCRDispo.Text = "";
+            txbCRGenre.Text = "";
+            txbCRPublic.Text = "";
+            txbCRRayon.Text = "";
+            chkCREmpruntable.Checked = false;
+            txbCRImage.Text = "";
+            pcbCRImage.Image = null;
+            lesCommandesRevues = new List<Abonnement>();
+            RemplirCommandesRevuesListe(lesCommandesRevues);
+            accesCommandeRevueGroupBox(false);
+        }
+
+        /// <summary>
+        /// Vide les zones d'affchage des informations de la commande de la revue
+        /// </summary>
+        private void VideCommandesRevuesInfos()
+        {
+            txbMontantCR.Text = "";
+            dtpFinAboCR.Value = DateTime.Now;
+            dtpDateCR.Value = DateTime.Now;
+            txbNumCR.Text = "";
+        }
+
+        /// <summary>
+        /// Si le numéro de revue est modifié, la zone de la commande est vidée et inactive
+        /// les informations de la revue sont aussi effacées
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void txbCRNumRecherche_TextChanged(object sender, EventArgs e)
+        {
+            accesCommandeRevueGroupBox(false);
+            VideCRRevueInfos();
+        }
+
+        /// <summary>
+        /// Enregistrement d'une commande de revue
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnValiderCR_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        /// <summary>
+        /// Sélection d'une ligne complète d'une commande de revue
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void dgvCRListe_SelectionChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        /// <summary>
+        /// Affiche les informations de la commande passée en paramètre
+        /// </summary>
+        /// <param name="commande">Objet de type Abonnement</param>
+        private void afficheCommandesRevuesInfos(Abonnement commande)
+        {
+            dtpDateCR.Value = commande.DateCommande;
+            txbMontantCR.Text = (commande.Montant).ToString();
+            dtpFinAboCR.Value = commande.DateFinAbonnement;
+            txbNumCR.Text = commande.Id;
+        }
+
+        /// <summary>
+        /// Supprime une commande de revue si elle n'a pas au moins un exemplaire associé
+        /// compris entre la date de commande et la date de fin d'abonnement
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnDelCR_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        #endregion
 
     }
 }
